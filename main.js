@@ -3,6 +3,11 @@ const {app, BrowserWindow, Menu} = require('electron');
 const DEV = true;
 let win;
 
+// 单例运行
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
+
 const addItemsForDev = (submenu) => {
   if (DEV) {
     const click = (item, win) => {
@@ -30,7 +35,7 @@ const setMenu = () => {
 };
 
 const createWindow = () => {
-  win = new BrowserWindow({width: 250, height: 100});
+  win = new BrowserWindow({width: 250, height: 100, show: false});
   win.loadFile('index.html');
   win.on('closed', () => {
     win = null
