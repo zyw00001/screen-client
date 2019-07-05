@@ -9,6 +9,11 @@ const initWebSocket = (screenShot) => {
   ws.onclose = () => {
     console.log('onclose');
     screenShot.stop();
+
+    // 断开重连
+    setTimeout(() => {
+      initWebSocket(screenShot);
+    }, 1000 * 10);
   };
 
   ws.onmessage = (event) => {
@@ -17,6 +22,14 @@ const initWebSocket = (screenShot) => {
       screenShot.play(ws);
     } else if (event.data === 'screen-shot-stop') {
       screenShot.stop();
+    } else if (event.data === 'hardware-info') {
+      require('getmac').getMac((err, macAddress) => {
+        const json = {type: 'hardware-info', width: screen.width, height: screen.height};
+        if (!err) {
+          json.mac = macAddress;
+        }
+        ws.send(JSON.stringify(json));
+      });
     }
   }
 };
