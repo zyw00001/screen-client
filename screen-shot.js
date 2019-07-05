@@ -1,6 +1,7 @@
 const {desktopCapturer} = require('electron');
+const ImageSlice = require('./image-slice');
 
-const FPS = 10;
+const FPS = 24;
 
 class ScreenShot {
   constructor() {
@@ -8,6 +9,10 @@ class ScreenShot {
     this._play = false;
     this._timerId = null;
     this._screenSize = {width: screen.width, height: screen.height};
+    this._imageSlice = new ImageSlice(this._screenSize.width, this._screenSize.height);
+    this._previous = null;
+    this._discardCount = screen.width * screen.height * 3 * 2;
+    this._discard = false;
   }
 
   // 开始截屏
@@ -18,6 +23,8 @@ class ScreenShot {
 
     this._ws = ws;
     this._play = true;
+    this._previous = null;
+    this._discard = false;
     this._timerId = setInterval(() => {
       if (this._play) {
         this._shot();
@@ -35,6 +42,7 @@ class ScreenShot {
     this._ws = null;
     clearInterval(this._timerId);
     this._timerId = null;
+    this._previous = null;
   }
 
   // 截取一帧画面
@@ -49,13 +57,18 @@ class ScreenShot {
   // 发送屏幕数据
   _send(img) {
     if (this._ws) {
-      this._ws.send(new Uint8Array(img.getBitmap()));
+      if (this._discard || this._ws.bufferedAmount < this._discardCount) {
+        const diff = this._imageSlice.diff(img, this._previous);
+        this._discard = false;
+        this._previous = img;
+        this._imageSlice.getSlices(img, diff).forEach((imgSlice) => {
+          this._ws.send(new Uint8Array(imgSlice));
+        });
+      } else {
+        this._discard = true;
+        console.log('discard');
+      }
     }
-  }
-
-  // 对比屏幕数据
-  _compare() {
-
   }
 }
 

@@ -1,7 +1,7 @@
 const ScreenShot = require('./screen-shot');
 
 const initWebSocket = (screenShot) => {
-  const ws = new WebSocket('ws://localhost:9000');
+  const ws = new WebSocket('ws://192.168.202.34:9000');
   ws.onopen = () => {
     console.log('onopen');
   };
