@@ -12,7 +12,6 @@ class ScreenShot {
     this._imageSlice = new ImageSlice(this._screenSize.width, this._screenSize.height);
     this._previous = null;
     this._discardCount = screen.width * screen.height * 3 * 2;
-    this._discard = false;
   }
 
   // 开始截屏
@@ -24,7 +23,6 @@ class ScreenShot {
     this._ws = ws;
     this._play = true;
     this._previous = null;
-    this._discard = false;
     this._timerId = setInterval(() => {
       if (this._play) {
         this._shot();
@@ -57,15 +55,13 @@ class ScreenShot {
   // 发送屏幕数据
   _send(img) {
     if (this._ws) {
-      if (this._discard || this._ws.bufferedAmount < this._discardCount) {
+      if (this._ws.bufferedAmount < this._discardCount) {
         const diff = this._imageSlice.diff(img, this._previous);
-        this._discard = false;
         this._previous = img;
         this._imageSlice.getSlices(img, diff).forEach((imgSlice) => {
           this._ws.send(new Uint8Array(imgSlice));
         });
       } else {
-        this._discard = true;
         console.log('discard');
       }
     }

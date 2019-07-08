@@ -1,19 +1,46 @@
 const ScreenShot = require('./screen-shot');
 
-const initWebSocket = (screenShot) => {
+class Heart {
+  constructor() {
+    this.id = null;
+  }
+
+  open(ws) {
+    if (ws) {
+      this.close();
+      this.id = setInterval(() => {
+        ws.send(JSON.stringify({type: 'heart'}));
+      }, 60 * 1000);
+    }
+  }
+
+  close() {
+    if (this.id) {
+      clearInterval(this.id);
+      this.id = null;
+    }
+  }
+}
+
+const screenShot = new ScreenShot();
+const heart = new Heart();
+
+const initWebSocket = () => {
   const ws = new WebSocket('ws://192.168.202.34:9000');
+  const time = new Date().getTime();
+
   ws.onopen = () => {
     console.log('onopen');
+    heart.open(ws);
   };
 
   ws.onclose = () => {
     console.log('onclose');
+    heart.close();
     screenShot.stop();
 
     // 断开重连
-    setTimeout(() => {
-      initWebSocket(screenShot);
-    }, 1000 * 10);
+    setTimeout(initWebSocket, new Date().getTime() - time > 15000 ? 0 : 10000);
   };
 
   ws.onmessage = (event) => {
@@ -34,4 +61,4 @@ const initWebSocket = (screenShot) => {
   }
 };
 
-initWebSocket(new ScreenShot());
+initWebSocket();
